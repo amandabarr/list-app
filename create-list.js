@@ -112,13 +112,6 @@ listContainer.addEventListener("click", function(e){
             }
         }
 
-
-        const request = objectStore.put({ task: textContentWithoutX, done: true })
-        request.onsuccess = () => {
-
-            console.log("Task is now done");
-        };
-
         request.onerror = (event) => {
             console.error(`Error editing task in the database: ${event.target.error}`);
         };
