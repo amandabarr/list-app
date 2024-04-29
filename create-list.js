@@ -1,5 +1,6 @@
 const inputBox = document.getElementById("input-box");
 const listContainer = document.getElementById("list-container");
+const doneListContainer = document.getElementById("done-list-container");
 
 const request = window.indexedDB.open("ToDoListDatabase", 1);
 
@@ -36,7 +37,7 @@ request.onsuccess = (event) => {
         taskQuery.onsuccess = (event) => {
             const result = event.target.result;
             if (result) {
-                console.log(result);
+                console.log(`This is the result of event.target.result: ${result}`);
                 // Show result in DOM
             } else {
                 console.log("No task found with that ID");
@@ -49,6 +50,33 @@ request.onsuccess = (event) => {
     }
 
     renderList();
+
+    console.log(request.result);
+
+    // testing printing DONE items -
+    function renderDoneItems () {
+        db.transaction("tasks").objectStore("tasks").getAll().onsuccess = (event) => {
+            const tasks = event.target.result;
+
+            tasks.forEach((task) => {
+                let li = document.createElement("li");
+                if (task.done == true) {
+                    li.innerHTML = task.task;
+                    doneListContainer.appendChild(li);
+                } else {
+                    li.innerHTML = task.task;
+                    listContainer.appendChild(li);
+                }
+
+                console.log(`This is a test to see what prints: ${task.task} : ${task.done}`);
+            })
+
+        };
+
+    }
+
+
+    renderDoneItems();
 
     //also save done true/false to DB and only populate not done
 };
@@ -77,9 +105,16 @@ function addTaskToDB(task) {
     // objectStore method refers to existing object store within the DB
     const objectStore = transaction.objectStore("tasks");
     // when adding the new task, it will also be marked as not done
+    console.log("The current task is: " + task + " done: " + objectStore.getAll());
+    // following: https://dev.to/pandresdev/get-data-from-indexeddb-7hg
     const request = objectStore.add({ task: task, done: false })
         request.onsuccess = () => {
-            console.log("Task added to the database");
+            console.log("Task: " + task + " added to the database");
+            const task_request = db.transaction("tasks").objectStore("tasks").getAll();
+            task_request.onsuccess = () => {
+                const tasks = task_request.result;
+                console.table(tasks);
+            }
         };
 
         request.onerror = (event) => {
@@ -124,6 +159,7 @@ listContainer.addEventListener("click", function(e){
         // saveData();
     }
 }, false);
+
 
 // function saveData() {
 //     localStorage.setItem("data", listContainer.innerHTML);
