@@ -67,8 +67,6 @@ request.onsuccess = (event) => {
                     li.innerHTML = task.task;
                     listContainer.appendChild(li);
                 }
-
-                console.log(`This is a test to see what prints: ${task.task} : ${task.done}`);
             })
 
         };
@@ -127,22 +125,33 @@ listContainer.addEventListener("click", function(e){
     if(e.target.tagName === "LI"){
         e.target.classList.toggle("checked");
         console.log("This item is now checked");
+
         const textContentWithoutX = Array.from(e.target.childNodes).filter(node => node.nodeName !== 'SPAN').map(node => node.textContent).join('');
         console.log(textContentWithoutX);
         // mark the task as DONE
+
         const transaction = db.transaction("tasks", "readwrite");
         const objectStore = transaction.objectStore("tasks");
+
         objectStore.openCursor().onsuccess = (event) => {
             const cursor = event.target.result;
             if (cursor) {
-                if (cursor.value.task === textContentWithoutX) {
-                    const updateData = cursor.value;
+                const task = cursor.value;
 
-                    updateData.done = true;
-                    const request = cursor.update(updateData);
+                if (task.task === textContentWithoutX) {
+                    task.done = true;
+
+                    const request = cursor.update(task);
                     request.onsuccess = () => {
+
                         console.log("Updated task done status");
+
+                        cursor.continue();
                     };
+
+                } else {
+                    // move to the next task if the current one does not match
+                    cursor.continue();
                 }
             }
         }
