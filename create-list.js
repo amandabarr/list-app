@@ -27,29 +27,29 @@ request.onsuccess = (event) => {
     db = event.target.result;
 
     //create renderList function and populate from the database using get/getAll
-    function renderList () {
-        const transaction = db.transaction("tasks", "readwrite");
-        // console.log(transaction);
-        const store = transaction.objectStore("tasks");
-        const taskIndex = store.index("task");
-        const taskQuery = taskIndex.getAll();
+    // function renderList () {
+    //     const transaction = db.transaction("tasks", "readwrite");
+    //     // console.log(transaction);
+    //     const store = transaction.objectStore("tasks");
+    //     const taskIndex = store.index("task");
+    //     const taskQuery = taskIndex.getAll();
 
-        taskQuery.onsuccess = (event) => {
-            const result = event.target.result;
-            if (result) {
-                console.log(`This is the result of event.target.result: ${result}`);
-                // Show result in DOM
-            } else {
-                console.log("No task found with that ID");
-            }
-        };
+    //     taskQuery.onsuccess = (event) => {
+    //         const result = event.target.result;
+    //         if (result) {
+    //             console.log(`This is the result of event.target.result: ${result}`);
+    //             // Show result in DOM
+    //         } else {
+    //             console.log("No task found with that ID");
+    //         }
+    //     };
 
-        taskQuery.onerror = (event) => {
-            console.error("Error fetching task:", event.target.error);
-        };
-    }
+    //     taskQuery.onerror = (event) => {
+    //         console.error("Error fetching task:", event.target.error);
+    //     };
+    // }
 
-    renderList();
+    // renderList();
 
     console.log(request.result);
 
@@ -60,7 +60,9 @@ request.onsuccess = (event) => {
 
             tasks.forEach((task) => {
                 let li = document.createElement("li");
+
                 if (task.done == true) {
+                    li.classList.add("checked");
                     li.innerHTML = task.task;
                     doneListContainer.appendChild(li);
                 } else {
@@ -179,3 +181,4 @@ listContainer.addEventListener("click", function(e){
 // }
 
 // showTask();
+
