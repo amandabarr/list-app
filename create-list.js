@@ -48,8 +48,10 @@ request.onsuccess = (event) => {
           li.innerHTML = task.task;
           doneListContainer.appendChild(li);
         } else {
-          li.innerHTML = task.task;
-          listContainer.appendChild(li);
+          if (task.visible == true) {
+            li.innerHTML = task.task;
+            listContainer.appendChild(li);
+          }
         }
       });
     };
