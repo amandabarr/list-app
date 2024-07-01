@@ -31,34 +31,41 @@ request.onsuccess = (event) => {
   // db now holds reference to the opened database
   db = event.target.result;
 
-  // testing printing DONE items -
-  function renderDoneItems() {
-    db.transaction("tasks").objectStore("tasks").getAll().onsuccess = (
-      event,
-    ) => {
-      const tasks = event.target.result;
-
-      tasks.forEach((task) => {
-        let li = document.createElement("li");
-
-        if (task.done == true) {
-          li.classList.add("checked");
-          li.innerHTML = task.task;
-          doneListContainer.appendChild(li);
-        } else {
-          if (task.visible == true) {
-            li.innerHTML = task.task;
-            listContainer.appendChild(li);
-          }
-        }
-      });
-    };
-  }
-
   renderDoneItems();
-
-  //also save done true/false to DB and only populate not done
 };
+
+// testing printing DONE items -
+function renderDoneItems() {
+  const transaction = db.transaction("tasks", "readonly");
+  const objectStore = transaction.objectStore("tasks");
+  const request = objectStore.getAll();
+
+  request.onsuccess = (event) => {
+    const tasks = event.target.result;
+    tasks.forEach((task) => {
+      let li = document.createElement("li");
+      li.innerHTML = task.task;
+
+      let span = document.createElement("span");
+      span.className = "close";
+      span.innerHTML = "\u00d7";
+      li.appendChild(span);
+
+      if (task.done) {
+        li.classList.add("checked");
+        doneListContainer.appendChild(li);
+      } else if (task.visible) {
+        listContainer.appendChild(li);
+      }
+    });
+  };
+
+  request.onerror = (event) => {
+    console.error(
+      `Error fetching tasks from the database: ${event.target.error}`,
+    );
+  };
+}
 
 // eslint-disable-next-line no-unused-vars
 function addTask() {
