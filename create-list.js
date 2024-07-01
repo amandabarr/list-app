@@ -31,8 +31,6 @@ request.onsuccess = (event) => {
   // db now holds reference to the opened database
   db = event.target.result;
 
-  console.log(request.result);
-
   // testing printing DONE items -
   function renderDoneItems() {
     db.transaction("tasks").objectStore("tasks").getAll().onsuccess = (
@@ -81,7 +79,6 @@ function addTask() {
   }
   // now we want to make sure that the text box is empty
   inputBox.value = "";
-  // saveData();
 }
 
 function addTaskToDB(task) {
@@ -89,10 +86,7 @@ function addTaskToDB(task) {
   // objectStore method refers to existing object store within the DB
   const objectStore = transaction.objectStore("tasks");
   // when adding the new task, it will also be marked as not done
-  console.log(
-    "The current task is: " + task + " done: " + objectStore.getAll(),
-  );
-  // following: https://dev.to/pandresdev/get-data-from-indexeddb-7hg
+
   const request = objectStore.add({ task: task, done: false, visible: true });
   request.onsuccess = () => {
     console.log("Task: " + task + " added to the database");
@@ -120,7 +114,7 @@ listContainer.addEventListener(
         .map((node) => node.textContent)
         .join("");
       console.log(textContentWithoutX);
-      // mark the task as DONE
+      // mark the task as DONE and print the task name to the console
 
       const transaction = db.transaction("tasks", "readwrite");
       const objectStore = transaction.objectStore("tasks");
@@ -151,28 +145,36 @@ listContainer.addEventListener(
           `Error editing task in the database: ${event.target.error}`,
         );
       };
-
-      // saveData();
     } else if (e.target.tagName === "SPAN") {
       const transaction = db.transaction("tasks", "readwrite");
       const objectStore = transaction.objectStore("tasks");
+
       objectStore.openCursor().onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {
           const task = cursor.value;
-          task.visible = false;
-          e.target.parentElement.remove();
+          const listItem = e.target.parentElement;
+          const textContentWithoutX = Array.from(listItem.childNodes)
+            .filter((node) => node.nodeName !== "SPAN")
+            .map((node) => node.textContent)
+            .join("");
 
-          const updateRequest = cursor.update(task);
-          updateRequest.onsuccess = () => {
-            console.log("This item is now removed");
-          };
+          if (task.task === textContentWithoutX) {
+            task.visible = false;
+            e.target.parentElement.remove();
 
-          updateRequest.onerror = (event) => {
-            console.error(
-              `Error updating task visibility in the database: ${event.event.target.error}`,
-            );
-          };
+            const updateRequest = cursor.update(task);
+            updateRequest.onsuccess = () => {
+              console.log("This item is now removed");
+              cursor.continue();
+            };
+
+            updateRequest.onerror = (event) => {
+              console.error(
+                `Error updating task visibility in the database: ${event.event.target.error}`,
+              );
+            };
+          }
         } else {
           cursor.continue();
         }
