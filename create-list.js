@@ -19,9 +19,7 @@ request.onupgradeneeded = (event) => {
     autoIncrement: true,
   });
   objectStore.createIndex("task", "task", { unique: false });
-  // keep track of whether task is completed or not
   objectStore.createIndex("done", "done", { unique: false });
-
   objectStore.createIndex("visible", "visible", { unique: false });
 };
 
@@ -31,11 +29,11 @@ request.onsuccess = (event) => {
   // db now holds reference to the opened database
   db = event.target.result;
 
-  renderDoneItems();
+  renderTasks();
 };
 
-// testing printing DONE items -
-function renderDoneItems() {
+// Render tasks from the database
+function renderTasks() {
   const transaction = db.transaction("tasks", "readonly");
   const objectStore = transaction.objectStore("tasks");
   const request = objectStore.getAll();
@@ -45,6 +43,7 @@ function renderDoneItems() {
     tasks.forEach((task) => {
       let li = document.createElement("li");
       li.innerHTML = task.task;
+      li.setAttribute("id", task.id);
 
       let span = document.createElement("span");
       span.className = "close";
@@ -155,40 +154,58 @@ listContainer.addEventListener(
     } else if (e.target.tagName === "SPAN") {
       const transaction = db.transaction("tasks", "readwrite");
       const objectStore = transaction.objectStore("tasks");
-
-      objectStore.openCursor().onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-          const task = cursor.value;
-          const listItem = e.target.parentElement;
-          const textContentWithoutX = Array.from(listItem.childNodes)
-            .filter((node) => node.nodeName !== "SPAN")
-            .map((node) => node.textContent)
-            .join("");
-
-          if (task.task === textContentWithoutX) {
-            task.visible = false;
-            e.target.parentElement.remove();
-
-            const updateRequest = cursor.update(task);
-            updateRequest.onsuccess = () => {
-              console.log("This item is now removed");
-              cursor.continue();
-            };
-
-            updateRequest.onerror = (event) => {
-              console.error(
-                `Error updating task visibility in the database: ${event.event.target.error}`,
-              );
-            };
-          }
-        } else {
-          cursor.continue();
-        }
+      const id = Number(e.target.parentElement.getAttribute("id"));
+      console.log("Task id: ", id);
+      const request = objectStore.get(id);
+      // get method returns an object selevted by a specified key from an object store in the database, in this case the "key"
+      request.onsuccess = () => {
+        const task = request.result;
+        // in previous cursor example, I set task to cursor.value(), so task was set to the value of the current cursor
+        task.visible = false;
+        objectStore.put(task);
+        e.target.parentElement.remove();
       };
-      // objectStore.delete(task);
-      // saveData();
+
+      //       const id = e.target.parentElement.getAttribute("id");
+      // const request = objectStore.get(id)
+      // request.onsuccess = function (params) {
+      //       const task = console.log(request.result);
+      //       task.visible = true;
+      //       objectStore.put(task, id);
     }
+
+    // objectStore.openCursor().onsuccess = (event) => {
+    //   const cursor = event.target.result;
+    //   if (cursor) {
+    //     const task = cursor.value;
+    //     const listItem = e.target.parentElement;
+    //     const textContentWithoutX = Array.from(listItem.childNodes)
+    //       .filter((node) => node.nodeName !== "SPAN")
+    //       .map((node) => node.textContent)
+    //       .join("");
+
+    //     if (task.task === textContentWithoutX) {
+    //       task.visible = false;
+    //       e.target.parentElement.remove();
+
+    //       const updateRequest = cursor.update(task);
+    //       updateRequest.onsuccess = () => {
+    //         console.log("This item is now removed");
+    //         cursor.continue();
+    //       };
+
+    //       updateRequest.onerror = (event) => {
+    //         console.error(
+    //           `Error updating task visibility in the database: ${event.event.target.error}`,
+    //         );
+    //       };
+    //     }
+    //   } else {
+    //     cursor.continue();
+    //   }
+    // };
+    // objectStore.delete(task);
+    // saveData();
   },
   false,
 );
