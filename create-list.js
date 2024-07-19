@@ -103,36 +103,58 @@ listContainer.addEventListener(
       e.target.classList.toggle("checked");
       console.log("This item is now checked");
 
-      const textContentWithoutX = Array.from(e.target.childNodes)
-        .filter((node) => node.nodeName !== "SPAN")
-        .map((node) => node.textContent)
-        .join("");
-      console.log(textContentWithoutX);
+      // const textContentWithoutX = Array.from(e.target.childNodes)
+      //   .filter((node) => node.nodeName !== "SPAN")
+      //   .map((node) => node.textContent)
+      //   .join("");
+      // console.log(textContentWithoutX);
       // mark the task as DONE and print the task name to the console
 
       const transaction = db.transaction("tasks", "readwrite");
       const objectStore = transaction.objectStore("tasks");
+      console.log(objectStore);
+      const id = e.target.getAttribute("id");
+      const taskName = e.target.getAttribute("task");
+      console.log(id);
+      console.log("Task id: ", id, "Task name: ", taskName);
+      const request = objectStore.get(Number(id));
+      console.log(request);
 
-      objectStore.openCursor().onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-          const task = cursor.value;
+      request.onsuccess = (event) => {
+        const task = request.result;
+        console.log(task);
+        task.done = true;
 
-          if (task.task === textContentWithoutX) {
-            task.done = true;
+        const updateRequest = objectStore.put(task);
 
-            const request = cursor.update(task);
-            request.onsuccess = () => {
-              console.log("Updated task done status");
-
-              cursor.continue();
-            };
-          } else {
-            // move to the next task if the current one does not match
-            cursor.continue();
-          }
-        }
+        updateRequest.onsuccess = () => {
+          console.log("Task updated successfully");
+        };
+        updateRequest.onerror = (event) => {
+          console.error(`Error updating task: $event.target.error}`);
+        };
       };
+
+      // objectStore.openCursor().onsuccess = (event) => {
+      //   const cursor = event.target.result;
+      //   if (cursor) {
+      //     const task = cursor.value;
+
+      //     if (task.task === textContentWithoutX) {
+      //       task.done = true;
+
+      //       const request = cursor.update(task);
+      //       request.onsuccess = () => {
+      //         console.log("Updated task done status");
+
+      //         cursor.continue();
+      //       };
+      //     } else {
+      //       // move to the next task if the current one does not match
+      //       cursor.continue();
+      //     }
+      //   }
+      // };
 
       request.onerror = (event) => {
         console.error(
@@ -153,6 +175,7 @@ listContainer.addEventListener(
         task.visible = false;
 
         objectStore.put(task);
+        // renderTasks();
         e.target.parentElement.remove();
       };
     }
